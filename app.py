@@ -1,65 +1,55 @@
 import streamlit as st
 from PIL import Image, ImageStat
 
-st.set_page_config(page_title="Fuji Recipe Engineer v2.0", layout="centered")
+st.set_page_config(page_title="Fuji Genius v3.0", layout="centered")
+st.title("📸 Fujifilm Recipe Engineer v3.0")
+st.write("Deep color analysis enabled. Results are now in English.")
 
-st.title("📸 Fujifilm Reçete Mühendisi v2.0")
-st.write("Analiz derinleştirildi: Beyaz Dengesi ve Gerçek Pozlama değerleri eklendi.")
-
-uploaded_file = st.file_uploader("Bir fotoğraf yükle...", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Upload a photo for analysis...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     img = Image.open(uploaded_file)
-    st.image(img, caption="Analiz Edilen Fotoğraf", use_container_width=True)
+    st.image(img, use_container_width=True)
     
-    # --- GELİŞMİŞ ANALİZ MOTORU ---
+    # --- ADVANCED COLOR & LIGHT ANALYSIS ---
     stat = ImageStat.Stat(img)
-    r, g, b = stat.mean
-    brightness = (r + g + b) / 3
+    r, g, b = stat.mean 
+    brightness = (r * 299 + g * 587 + b * 114) / 1000
     
     st.divider()
-    st.subheader("🎯 Profesyonel Reçete Kartı")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # 1. Simülasyon Kararı
-        if r > b + 10: # Sıcak/Kırmızı tonlar baskınsa
-            sim = "Classic Negative"
-            sub_text = "Nostaljik ve sert kontrastlı tonlar."
-        elif b > g: # Maviler baskınsa
-            sim = "Classic Chrome"
-            sub_text = "Belgesel tadında, soluk ve sinematik."
-        else:
-            sim = "Provia/Standard"
-            sub_text = "Doğal ve dengeli renkler."
-            
-        st.metric("Film Simulation", sim)
-        st.caption(f"💡 {sub_text}")
+    st.subheader("🧪 Engineered Recipe Card")
 
-        # 2. Beyaz Dengesi (WB Shift) - YENİ!
-        # Fotoğraftaki renk sapmasını ölçüp tersine veya destekleyici ayar verir
-        wb_r = int((r - 128) / 20)
-        wb_b = int((128 - b) / 20)
-        st.metric("WB Shift", f"R: {wb_r}, B: {wb_b}")
-        st.caption("💡 Fotoğrafın renk sıcaklığını eşlemek için.")
+    # --- LOGIC ENGINE ---
+    # 1. WB SHIFT (Based on color dominance)
+    wb_r_calc = int((r - g) / 8) + 3  # Pushing Red further for warmth
+    wb_b_calc = int((b - g) / 10) - 4 # Pulling Blue down
+
+    # 2. FILM SIMULATION SELECTION
+    if r > 140 and g > 120: 
+        sim = "Classic Negative"
+        notes = "Perfect for that nostalgic, high-contrast look."
+    elif b > 130:
+        sim = "Classic Chrome"
+        notes = "Ideal for cinematic blues and documentary style."
+    else:
+        sim = "Astia/Soft"
+        notes = "Best for soft skin tones and natural light."
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Film Simulation", sim)
+        st.metric("WB Shift (R, B)", f"R: {wb_r_calc}, B: {wb_b_calc}")
+        st.caption(f"💡 {notes}")
 
     with col2:
-        # 3. Gerçek Pozlama Değerleri (1/3 basamakları) - DÜZELTİLDİ!
-        if brightness < 100: ev = "+1.0"
-        elif brightness < 130: ev = "+2/3"
-        elif brightness < 150: ev = "+1/3"
-        else: ev = "0.0"
-        
-        st.metric("Exposure Comp.", ev)
-        st.caption("💡 Makine tekerleğindeki gerçek tık sayısı.")
+        # Better Exposure Logic
+        ev_val = "-2/3" if brightness > 155 else "0.0"
+        st.metric("Exposure Comp.", ev_val)
+        st.metric("Dynamic Range", "DR400")
 
-        st.metric("Dynamic Range", "DR400" if brightness > 130 else "DR100")
-        st.caption("💡 Işık patlamalarını engellemek için.")
-
-    # 4. Detaylı Parametre Tablosu
+    # 3. UPDATED PARAMETER TABLE (Aggressive Color)
     st.table({
-        "Parametre": ["Grain Effect", "Color Chrome Effect", "Highlight", "Shadow", "Color", "Sharpness", "Clarity"],
-        "Ayar": ["Strong, Small", "Strong", "-2.0", "-1.0", "+2", "0", "-3.0"],
-        "Not": ["Kumlanma dokusu", "Derin renkler", "Yumuşak ışık", "Detaylı gölge", "Canlılık", "Doğal keskinlik", "Dreamy efekt"]
+        "Setting": ["Color", "Highlight", "Shadow", "Grain Effect", "Color Chrome Effect", "Sharpness", "Clarity"],
+        "Value": ["+4", "-2", "0", "Strong, Small", "Strong", "-2", "-2"],
+        "Reason": ["Vibrant analog soul", "Soft highlights", "Natural shadows", "Film texture", "Deep tones", "Analog softness", "Dreamy look"]
     })
