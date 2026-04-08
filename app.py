@@ -1,59 +1,65 @@
 import streamlit as st
 from PIL import Image, ImageStat
 
-# Sayfa Ayarları
-st.set_page_config(page_title="Fuji Recipe AI", layout="centered")
+st.set_page_config(page_title="Fuji Recipe Engineer v2.0", layout="centered")
 
-st.title("📸 Fujifilm Reçete Mühendisi")
-st.write("Fotoğrafını yükle, kameran için **en yakın** ayarları al.")
+st.title("📸 Fujifilm Reçete Mühendisi v2.0")
+st.write("Analiz derinleştirildi: Beyaz Dengesi ve Gerçek Pozlama değerleri eklendi.")
 
-# Dosya Yükleme
-uploaded_file = st.file_uploader("Bir fotoğraf seç veya sürükle", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Bir fotoğraf yükle...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     img = Image.open(uploaded_file)
     st.image(img, caption="Analiz Edilen Fotoğraf", use_container_width=True)
     
-    # --- ANALİZ MOTORU ---
+    # --- GELİŞMİŞ ANALİZ MOTORU ---
     stat = ImageStat.Stat(img)
-    rgb_means = stat.mean
-    brightness = sum(rgb_means) / 3
+    r, g, b = stat.mean
+    brightness = (r + g + b) / 3
     
     st.divider()
-    st.subheader("🎯 Önerilen Reçete Kartı")
+    st.subheader("🎯 Profesyonel Reçete Kartı")
     
-    # Karar Mekanizması (Senin istediğin hassasiyette geliştirildi)
     col1, col2 = st.columns(2)
     
     with col1:
-        # Film Simülasyonu Kararı
-        if rgb_means[0] > rgb_means[2]: # Kırmızılar baskınsa
+        # 1. Simülasyon Kararı
+        if r > b + 10: # Sıcak/Kırmızı tonlar baskınsa
             sim = "Classic Negative"
-            desc = "Sıcak ve nostaljik tonlar algılandı."
-        else:
+            sub_text = "Nostaljik ve sert kontrastlı tonlar."
+        elif b > g: # Maviler baskınsa
             sim = "Classic Chrome"
-            desc = "Belirgin maviler ve sinematik solukluk algılandı."
+            sub_text = "Belgesel tadında, soluk ve sinematik."
+        else:
+            sim = "Provia/Standard"
+            sub_text = "Doğal ve dengeli renkler."
             
         st.metric("Film Simulation", sim)
-        st.caption(f"💡 {desc}")
+        st.caption(f"💡 {sub_text}")
 
-        # Clarity (Netlik) Kararı
-        clarity = "-3.0" if brightness > 120 else "0"
-        st.metric("Clarity", clarity)
-        st.caption("💡 Yumuşak analog dokusu için.")
+        # 2. Beyaz Dengesi (WB Shift) - YENİ!
+        # Fotoğraftaki renk sapmasını ölçüp tersine veya destekleyici ayar verir
+        wb_r = int((r - 128) / 20)
+        wb_b = int((128 - b) / 20)
+        st.metric("WB Shift", f"R: {wb_r}, B: {wb_b}")
+        st.caption("💡 Fotoğrafın renk sıcaklığını eşlemek için.")
 
     with col2:
-        # Pozlama ve DR Kararı
-        ev = "+0.7" if brightness < 150 else "0.0"
-        dr = "DR400" if brightness > 130 else "DR100"
+        # 3. Gerçek Pozlama Değerleri (1/3 basamakları) - DÜZELTİLDİ!
+        if brightness < 100: ev = "+1.0"
+        elif brightness < 130: ev = "+2/3"
+        elif brightness < 150: ev = "+1/3"
+        else: ev = "0.0"
         
         st.metric("Exposure Comp.", ev)
-        st.metric("Dynamic Range", dr)
-        st.caption("💡 Parlak alanları korumak için.")
+        st.caption("💡 Makine tekerleğindeki gerçek tık sayısı.")
 
-    # Detaylı Tablo
+        st.metric("Dynamic Range", "DR400" if brightness > 130 else "DR100")
+        st.caption("💡 Işık patlamalarını engellemek için.")
+
+    # 4. Detaylı Parametre Tablosu
     st.table({
-        "Ayar": ["Highlight", "Shadow", "Color", "Sharpness", "Noise Red."],
-        "Değer": ["-2.0", "-1.0", "-2", "-1", "-4"],
-        "Neden": ["Parlaklığı yumuşatmak", "Gölgeleri açmak", "Film solukluğu", "Doğallık", "Gren koruma"]
+        "Parametre": ["Grain Effect", "Color Chrome Effect", "Highlight", "Shadow", "Color", "Sharpness", "Clarity"],
+        "Ayar": ["Strong, Small", "Strong", "-2.0", "-1.0", "+2", "0", "-3.0"],
+        "Not": ["Kumlanma dokusu", "Derin renkler", "Yumuşak ışık", "Detaylı gölge", "Canlılık", "Doğal keskinlik", "Dreamy efekt"]
     })
